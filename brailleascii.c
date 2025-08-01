@@ -1,19 +1,4 @@
-/**
-  ******************************************************************************
-  * File Name          : brailleascii.c
-  * Description        : Braille <-> ASCII conversion 
-	* version            : 1.0	
-	* Date               : 3 Aug 2016
-  ******************************************************************************
-  */
-/* Includes ------------------------------------------------------------------*/
-#include "brailleascii.h"
-#include "ff.h"
 
-//----------------------------------------------------------------------------------------------------------//
-
-const banatable_s table[TABLE_MAX_ENTRIES]=
-{ 
 	//ASCII   keycodes  brailledots
 	{ 	0x0A,		0xCF,		0xCF	},//P // New paragraph & new line indicator
 	{ 	0x0D,		0xEB,   0xEB	},//$     // New paragraph & new line indicator
@@ -77,16 +62,16 @@ const banatable_s table[TABLE_MAX_ENTRIES]=
 	{ 	0x59, 	0x3D, 	0x3D	},//Y
 	{ 	0x5A, 	0x35, 	0x35	},//Z
 	{ 	0x5B, 	0x2A, 	0x2A	},//[
-	{ 	0x5C, 	0x33,		0x33	},//\//
+	{ 	0x5C, 	0x33,	0x33	},//\//
 	{ 	0x5D, 	0x3B, 	0x3B	},//]
 	{ 	0x5E, 	0x18, 	0x18	},//^
 	{ 	0x5F, 	0x38, 	0x38	},//_
-	{ 	0x60,		0x08, 	0x08	},//`
-	{ 	0x61,		0x01, 	0x01	},//a
-	{ 	0x62,		0x03, 	0x03	},//b
-	{ 	0x63,		0x09, 	0x09	},//c
-	{ 	0x64,		0x19, 	0x19	},//d
-	{ 	0x65,		0x11, 	0x11	},//e
+	{ 	0x60,	0x08, 	0x08	},//`
+	{ 	0x61,	0x01, 	0x01	},//a
+	{ 	0x62,	0x03, 	0x03	},//b
+	{ 	0x63,	0x09, 	0x09	},//c
+	{ 	0x64,	0x19, 	0x19	},//d
+	{ 	0x65,	0x11, 	0x11	},//e
 	{ 	0x66,		0x0B, 	0x0B	},//f
 	{ 	0x67,		0x1B, 	0x1B	},//g
 	{ 	0x68,		0x13, 	0x13	},//h
@@ -176,126 +161,4 @@ const banatable_s table[TABLE_MAX_ENTRIES]=
 	{ 	0xFC, 	0xBB,		0xBB	},//]
 	{ 	0xFD, 	0x98,		0x98	},//^
 	{ 	0xFE, 	0xB8,		0xB8	},//_
-};
-
-//------------------------------------//FOR EDITOR ONLY-----------------------------------------------
-
-uint8_t ConvertKeycodesToBanaCodes(uint8_t param){
-		uint8_t count = 0;
-		bool MatchFound_Flag = FALSE;	
-		
-		for (count=0; count < TABLE_MAX_ENTRIES; count++)
-		{
-				if(table[count].keycodes == param)
-				{
-						MatchFound_Flag = TRUE;		
-						break; 
-				}
-		}//end of for loop
-		if(MatchFound_Flag)
-		{
-				return table[count].BanaCode;
-		}
-		else
-		{
-				return ((uint8_t)0x20);
-		}
-}//end of ConvertKeycodesToBanaCodes()
-
-
-uint8_t ConvertBanaCodesToBraillePattern(uint8_t param){
-		uint8_t count;
-		bool MatchFound_Flag = FALSE;		
-
-		for (count=0; count < TABLE_MAX_ENTRIES; count++)
-		{
-				if(table[count].BanaCode == param)
-				{
-						MatchFound_Flag = TRUE;
-						break; 
-				}
-		}
-		if(MatchFound_Flag)
-		{
-				return table[count].brailledots;
-		}
-		else
-		{
-				return 0x00;
-		}
-}//end of ConvertBanaCodesToBraillePattern()
-
-uint8_t bana_codes_to_braille_pattern(uint8_t *ptr_bana_buff, uint8_t *ptr_braille_buff, uint16_t bana_buff_cnt, uint16_t *braille_count)
-{
-	  uint16_t buff_cnt;
-
-    *braille_count = 0;
-	  for(buff_cnt = 0; buff_cnt < bana_buff_cnt; buff_cnt++)
-	  {
-				// If found the end of string character
-				if('\0' == *(ptr_bana_buff+buff_cnt))
-				{
-					break;
-				}
-				*(ptr_braille_buff+buff_cnt) = ConvertBanaCodesToBraillePattern(*(ptr_bana_buff+buff_cnt));
-				*braille_count+=1;
-	  }
-		return 0;
-}
-
-
-uint8_t ConvertBraillePatternToBanaCodes(uint8_t braille_pattern)
-{
-		uint16_t count = 0;
-	  uint8_t matchfound_flag = FALSE;
-	  
-	  if(braille_pattern == 0x00)
-		{
-				return ((TCHAR)0x20);
-		}
-		else
-		{
-				for(count=0; count < TABLE_MAX_ENTRIES; count++)
-				{
-						if(table[count].brailledots == braille_pattern)
-						{
-								matchfound_flag = TRUE;		
-								break; 
-						}
-				}
-			 
-				if(matchfound_flag)
-				{
-						return table[count].BanaCode;
-				}
-				else
-				{
-						return ((TCHAR)0x20);
-				}
-		}
-}//end of ConvertBraillePatternToBanaCodes()
-
-void braille_pattern_to_bana(uint8_t const *ptr_braille_buff, uint8_t *ptr_bana_buff, uint16_t ueb_buff_cnt, uint16_t *bana_count)
-{
-	  uint16_t buff_cnt;
-	  *bana_count = 0;
-	  for(buff_cnt = 0; buff_cnt < ueb_buff_cnt; buff_cnt++)
-	  {
-				// If found the end of file indicator = 0xFF
-				if(0xFF == *ptr_braille_buff)									  break;
-			
-				// If found UTF-8 indicator &  CR, LF, TAB(Horizontal)
-				if((0x7B == *ptr_braille_buff)||(0x7D == *ptr_braille_buff)||(0x7C == *ptr_braille_buff))
-				{
-						*(ptr_bana_buff+buff_cnt) = *ptr_braille_buff;
-						*bana_count+=1;
-				}
-				else
-				{
-						*(ptr_bana_buff+buff_cnt) = ConvertBraillePatternToBanaCodes(*ptr_braille_buff);
-						*bana_count+=1;
-				}
-				ptr_braille_buff++;
-		}
-}
 
